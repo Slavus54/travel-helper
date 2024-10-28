@@ -10,3 +10,4 @@ export const RANGE_LIMIT = 2
 
 export const DEFAULT_RANGE_VALUE = 5e1
 export const DEFAULT_RANGE_STEP = .1
+export const SEARCH_PERCENT = 60

@@ -1,8 +1,8 @@
-import {useState, useLayoutEffect} from "react"
+import {useState, useMemo, useLayoutEffect} from "react"
 import {Link} from "@remix-run/react"
 //@ts-ignore
 import {Codus} from 'codus.js'
-import {PITCH_LIMIT, RANGE_LIMIT, DEFAULT_RANGE_VALUE, DEFAULT_RANGE_STEP} from '~/env/env'
+import {PITCH_LIMIT, RANGE_LIMIT, DEFAULT_RANGE_VALUE, DEFAULT_RANGE_STEP, SEARCH_PERCENT} from '~/env/env'
 import {TownType} from "~/env/types"
 
 const Towns = ({towns = []}) => {
@@ -10,9 +10,11 @@ const Towns = ({towns = []}) => {
     const [distance, setDistance] = useState<number>(0)
     const [pitch, setPitch] = useState<number>(DEFAULT_RANGE_VALUE)
     const [range, setRange] = useState<number>(DEFAULT_RANGE_VALUE)
+    const [filtered, setFiltered] = useState<TownType[]>(towns)
     const [voices, setVoices] = useState<any>([])
     const [voice, setVoice] = useState<any>(null)
     const [text, setText] = useState<string>('')
+    const [title, setTitle] = useState<string>('')
 
     const codus = new Codus()
     
@@ -31,6 +33,16 @@ const Towns = ({towns = []}) => {
             setVoice(voices[0])
         }
     }, [])
+
+    useMemo(() => {
+        let result: TownType[] = towns
+        
+        if (title.length !== 0) {
+            result = result.filter((el: TownType) => codus.search(el.title, title, SEARCH_PERCENT))            
+        } 
+
+        setFiltered(result)
+    }, [title])
 
     function loadVoices() {
         setVoices(synth.getVoices())  
@@ -67,12 +79,9 @@ const Towns = ({towns = []}) => {
 
     return (
         <>
-            <h2 className="text-lg my-5 font-medium">Build own route</h2>
-            <p>Distance: <b>{distance}</b> km</p>
+            <h2 className="text-lg my-5 font-medium">Pronounce the text</h2>
 
-            <h2 className="text-lg my-5 font-medium">Text Pronounce</h2>
-
-            <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Text..." className="block p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+            <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Text..." className="w-1/4 h-30 block p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
 
             <span className="text-base font-thin">Pitch: <b className="font-bold">{pitch}</b></span>
 
@@ -88,11 +97,17 @@ const Towns = ({towns = []}) => {
 
             <button onClick={onListen} className="py-2 px-5 font-medium rounded-md bg-black text-white">Listen</button>
 
+            <h2 className="text-lg my-5 font-medium">Build own route</h2>
+
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title of region" className="w-1/5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+
+            <p>Distance: <b>{distance}</b> km</p>
+
             <div className="flex justify-around flex-row flex-wrap">
-                {towns.map((el: TownType) => 
+                {filtered.map((el: TownType) => 
                     <div className="flex justify-around flex-column m-1 max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                         <Link to={`/town/${el.title}`}>{el.title}</Link>
-                        <button onClick={() => onAddTown(el)}>Add</button>
+                        <button onClick={() => onAddTown(el)}>+</button>
                     </div>
                 )}
             </div>
